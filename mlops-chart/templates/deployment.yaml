@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment₩
+kind: Deployment
 metadata:
   name: {{ include "mlops-chart.fullname" . }}
   labels:
