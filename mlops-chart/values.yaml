@@ -1,0 +1,12 @@
+# Default values for mlops-chart.
+
+# Container image settings
+image:
+  repository: myusername/mlops-project  # Replace with your Docker Hub username
+  pullPolicy: IfNotPresent
+  tag: latest
+
+# Service settings for exposing the app
+service:
+  type: ClusterIP
+  port: 80
