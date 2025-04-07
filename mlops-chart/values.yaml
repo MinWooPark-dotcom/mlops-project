@@ -10,3 +10,10 @@ image:
 service:
   type: ClusterIP
   port: 80
+
+# ServiceAccount settings
+serviceAccount:
+  create: false
+  automount: false
+  annotations: {}
+  name: ""
