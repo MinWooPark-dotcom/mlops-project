@@ -17,3 +17,4 @@ threadpoolctl==3.6.0
 typing-inspection==0.4.0
 typing_extensions==4.13.1
 uvicorn==0.34.0
+prometheus-client
