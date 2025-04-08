@@ -8,7 +8,7 @@ image:
 
 # Service settings for exposing the app
 service:
-  type: NodePort
+  type: LoadBalancer
   port: 80
 
 # ServiceAccount settings
