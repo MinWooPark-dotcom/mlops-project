@@ -18,9 +18,11 @@ start_http_server(8001)
 
 @app.get("/")
 async def root():
+    request_counter.labels(endpoint="/").inc()
     return {"message": "Hello, MLOps Project!"}
 
 @app.get("/predict")
 async def predict(x: float):
+    request_counter.labels(endpoint="/predict").inc()
     prediction = model.predict(np.array([[x]]))[0]
     return {"input": x, "prediction": prediction}
