@@ -1,0 +1,36 @@
+# Python cache and bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Python virtual environments
+venv/
+.env
+
+# Logs and temp files
+*.log
+*.tmp
+
+# macOS and editor files
+.DS_Store
+*.swp
+*.swo
+
+# Git repository data
+.git
+.gitignore
+
+# Documentation files
+*.md
+*.txt
+
+# Test directories
+tests/
+
+# Build files
+Dockerfile
+docker-compose.yml
+
+# Terraform files
+terraform/
