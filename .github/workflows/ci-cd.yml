@@ -1,0 +1,103 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - feature/*
+
+jobs:
+  build-train-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Cache Terraform
+      uses: actions/cache@v3
+      with:
+        path: |
+          terraform/.terraform
+          terraform/.terraform.lock.hcl
+        key: terraform-${{ hashFiles('terraform/*.tf', 'terraform/.terraform.lock.hcl') }}
+        restore-keys: |
+          terraform-
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: '1.5.0'
+
+    - name: Install jq
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y jq
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Terraform Plan Only
+      run: |
+        cd terraform
+        terraform init
+        SUBNET_IDS_JSON=$(echo '${{ secrets.SUBNET_IDS }}' | jq -c '.')
+        terraform plan -input=false \
+        -var="cluster_name=${{ secrets.EKS_CLUSTER_NAME }}" \
+        -var="aws_region=${{ secrets.AWS_REGION }}" \
+        -var="vpc_id=${{ secrets.VPC_ID }}" \
+        -var="subnet_ids=$SUBNET_IDS_JSON"
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    # - name: Train model
+    #   run: python train.py
+
+    # - name: Test model
+    #   run: python test.py
+
+    - name: Build Docker image
+      run: |
+        docker build -t mlopsparkminwoo/mlops-project:${{ github.sha }} .
+        docker tag mlopsparkminwoo/mlops-project:${{ github.sha }} mlopsparkminwoo/mlops-project:latest
+
+    - name: Push Docker image
+      run: |
+        echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+        docker push mlopsparkminwoo/mlops-project:${{ github.sha }}
+        docker push mlopsparkminwoo/mlops-project:latest
+
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'latest'
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.EKS_CLUSTER_NAME }}
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+    - name: Deploy to development
+      if: github.ref != 'refs/heads/main'
+      run: |
+        kubectl apply -f kubernetes/dev-deployment.yaml
+
+    - name: Deploy to production
+      if: github.ref == 'refs/heads/main'
+      run: |
+        kubectl apply -f kubernetes/prod-deployment.yaml

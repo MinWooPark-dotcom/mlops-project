@@ -1,4 +1,4 @@
-variable "region" {
+variable "aws_region" {
   description = "AWS region to deploy EKS"
   type        = string
   default     = "ap-northeast-2"
