@@ -41,7 +41,11 @@ jobs:
       run: |
         cd terraform
         terraform init
-        terraform plan -input=false -var="cluster_name=${{ secrets.EKS_CLUSTER_NAME }}" -var="aws_region=${{ secrets.AWS_REGION }}" -var="vpc_id=${{ secrets.VPC_ID }}" -var="subnet_ids=${{ secrets.SUBNET_IDS }}"
+        terraform plan -input=false \
+          -var="cluster_name=${{ secrets.EKS_CLUSTER_NAME }}" \
+          -var="aws_region=${{ secrets.AWS_REGION }}" \
+          -var="vpc_id=${{ secrets.VPC_ID }}" \
+          -var="subnet_ids=${{ secrets.SUBNET_IDS }}"
 
     - name: Set up Python
       uses: actions/setup-python@v4
