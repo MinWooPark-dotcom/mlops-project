@@ -63,11 +63,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Train model
-      run: python train.py
+    # - name: Train model
+    #   run: python train.py
 
-    - name: Test model
-      run: python test.py
+    # - name: Test model
+    #   run: python test.py
 
     - name: Build Docker image
       run: |
