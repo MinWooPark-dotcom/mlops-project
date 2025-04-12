@@ -42,43 +42,37 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Terraform Plan Only
+    - name: Terraform Plan
       run: |
         cd terraform
         terraform init
         SUBNET_IDS_JSON=$(echo '${{ secrets.SUBNET_IDS }}' | jq -c '.')
         terraform plan -input=false \
-        -var="cluster_name=${{ secrets.EKS_CLUSTER_NAME }}" \
-        -var="aws_region=${{ secrets.AWS_REGION }}" \
-        -var="vpc_id=${{ secrets.VPC_ID }}" \
-        -var="subnet_ids=$SUBNET_IDS_JSON"
+          -var="cluster_name=${{ secrets.EKS_CLUSTER_NAME }}" \
+          -var="aws_region=${{ secrets.AWS_REGION }}" \
+          -var="vpc_id=${{ secrets.VPC_ID }}" \
+          -var="subnet_ids=$SUBNET_IDS_JSON"
 
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
 
-    - name: Install dependencies
+    - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    # - name: Train model
-    #   run: python train.py
-
-    # - name: Test model
-    #   run: python test.py
-
     - name: Build Docker image
       run: |
-        docker build -t mlopsparkminwoo/mlops-project:${{ github.sha }} .
-        docker tag mlopsparkminwoo/mlops-project:${{ github.sha }} mlopsparkminwoo/mlops-project:latest
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/mlops-project:${{ github.sha }} .
+        docker tag ${{ secrets.DOCKER_USERNAME }}/mlops-project:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/mlops-project:latest
 
-    - name: Push Docker image
+    - name: Push Docker image to Docker Hub
       run: |
         echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-        docker push mlopsparkminwoo/mlops-project:${{ github.sha }}
-        docker push mlopsparkminwoo/mlops-project:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/mlops-project:${{ github.sha }}
+        docker push ${{ secrets.DOCKER_USERNAME }}/mlops-project:latest
 
     - name: Set up kubectl
       uses: azure/setup-kubectl@v3
@@ -95,9 +89,13 @@ jobs:
     - name: Deploy to development
       if: github.ref != 'refs/heads/main'
       run: |
-        kubectl apply -f kubernetes/dev-deployment.yaml
+        helm upgrade --install mlops-app-dev ./mlops-chart \
+          --set image.repository=${{ secrets.DOCKER_USERNAME }}/mlops-project \
+          --set image.tag=${{ github.sha }}
 
     - name: Deploy to production
       if: github.ref == 'refs/heads/main'
       run: |
-        kubectl apply -f kubernetes/prod-deployment.yaml
+        helm upgrade --install mlops-app-prod ./mlops-chart \
+          --set image.repository=${{ secrets.DOCKER_USERNAME }}/mlops-project \
+          --set image.tag=latest
