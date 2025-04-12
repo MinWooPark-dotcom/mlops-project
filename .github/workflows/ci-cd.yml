@@ -45,7 +45,7 @@ jobs:
         -var="cluster_name=${{ secrets.EKS_CLUSTER_NAME }}" \
         -var="aws_region=${{ secrets.AWS_REGION }}" \
         -var="vpc_id=${{ secrets.VPC_ID }}" \
-        -var="subnet_ids='${{ secrets.SUBNET_IDS }}'"
+        -var="subnet_ids=${{ secrets.SUBNET_IDS }}"
 
     - name: Set up Python
       uses: actions/setup-python@v4
