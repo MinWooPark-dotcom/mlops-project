@@ -15,3 +15,7 @@ __pycache__/
 
 # macOs
 .DS_Store
+
+# Act Test
+.github/workflows/act-ci-cd.yml
+.secrets
