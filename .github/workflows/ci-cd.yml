@@ -31,7 +31,7 @@ jobs:
       run: |
         cd terraform
         terraform init
-        terraform plan
+        terraform plan -input=false -var="cluster_name=${{ secrets.EKS_CLUSTER_NAME }}"
 
     - name: Set up Python
       uses: actions/setup-python@v4
