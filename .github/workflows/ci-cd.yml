@@ -90,6 +90,8 @@ jobs:
       if: github.ref != 'refs/heads/main'
       run: |
         helm upgrade --install mlops-app-dev ./mlops-chart \
+          --namespace dev \
+          --create-namespace \
           --set image.repository=${{ secrets.DOCKER_USERNAME }}/mlops-project \
           --set image.tag=${{ github.sha }}
 
@@ -97,5 +99,7 @@ jobs:
       if: github.ref == 'refs/heads/main'
       run: |
         helm upgrade --install mlops-app-prod ./mlops-chart \
+          --namespace prod \
+          --create-namespace \
           --set image.repository=${{ secrets.DOCKER_USERNAME }}/mlops-project \
           --set image.tag=latest
